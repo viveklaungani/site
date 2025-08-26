@@ -18,25 +18,17 @@
             --font: 'Courier New', monospace;
 
             --fs-big: 60px;
-            /* fin + wheel (desktop) */
             --fs-small: 25px;
-            /* arrows, button, subtext, caption */
 
             --row: 60px;
-            /* row height; JS measures actual too */
             --pad: 60px;
-            /* padding above/below active inside viewport */
             --viewport: 180px;
-            /* pad + row + pad */
 
             --pill: 15px;
             --ease: 0.5s ease;
             --join-offset: 16px;
-            /* space between “fin” and wheel */
 
-            /* NEW: extra spacing for arrows */
             --arrow-gap: 40px;
-            /* desktop arrow distance from viewport */
         }
 
         * {
@@ -60,7 +52,6 @@
             overscroll-behavior: none;
         }
 
-        /* LEFT */
         .left-half {
             flex: 1;
             height: 100%;
@@ -100,7 +91,6 @@
             border-radius: 50%;
             overflow: hidden;
             box-shadow: 0 0 40px rgba(211, 211, 211, .45), 0 0 0 2px rgba(255, 255, 255, .15) inset;
-            /* NEW: lower the image on desktop for a more centered look */
             margin-top: clamp(60px, 14vh, 180px);
         }
 
@@ -122,7 +112,6 @@
             white-space: pre-line;
         }
 
-        /* RIGHT */
         .right-half {
             flex: 1;
             display: flex;
@@ -165,7 +154,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* static button */
             flex-direction: column;
             gap: 8px;
         }
@@ -234,7 +222,6 @@
             cursor: pointer;
         }
 
-        /* NEW: arrows further away from the text */
         .arrow.up {
             top: calc(-1 * var(--arrow-gap));
         }
@@ -265,7 +252,6 @@
             width: 100%;
         }
 
-        /* Keep the row box fixed; scale only the label so underline/baseline stay fixed */
         .wheel-item {
             height: var(--row);
             line-height: var(--row);
@@ -352,7 +338,6 @@
                 --viewport: calc(var(--pad) + var(--row) + var(--pad));
                 --join-offset: 12px;
                 --arrow-gap: 28px;
-                /* a bit tighter on mobile */
             }
 
             body {
@@ -379,7 +364,6 @@
                 margin-top: 0;
             }
 
-            /* mobile already perfect; don't push down */
             .under-text {
                 width: 100%;
                 font-size: 18px;
@@ -409,6 +393,13 @@
 
             .wheel-stack {
                 width: clamp(220px, 60vw, 320px);
+                margin-top: -20px;
+                /* Move wheel higher */
+            }
+
+            .column-right {
+                margin-top: -16px;
+                /* Move button and hashtag text higher */
             }
 
             .viewport {
@@ -516,9 +507,8 @@
         }
 
         function applyTransform() {
-            // bottom_i (from top of viewport) = PAD + (i+1)*ROW
             const rawY = PAD + (currentIndex + 1) * ROW - baselineTarget;
-            const y = Math.round(rawY); // snap to px
+            const y = Math.round(rawY);
             wheelItems.style.transform = `translateY(${-y}px)`;
         }
 
@@ -563,13 +553,12 @@
         function onWheel(evt) {
             evt.preventDefault();
             const now = Date.now();
-            if (now - lastWheelTs < 100) return; // one step per gesture
+            if (now - lastWheelTs < 100) return;
             lastWheelTs = now;
             stepTo(currentIndex + (evt.deltaY > 0 ? 1 : -1));
         }
         wheelViewport.addEventListener('wheel', onWheel, { passive: false });
 
-        // touch swipe
         let touchStartY = null;
         wheelViewport.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
         wheelViewport.addEventListener('touchmove', e => { if (touchStartY !== null) e.preventDefault(); }, { passive: false });
@@ -588,26 +577,19 @@
             if (e.key === 'ArrowUp') { e.preventDefault(); stepTo(currentIndex - 1); }
         });
 
-        /* Recalculate on layout changes */
         ['resize', 'orientationchange', 'load'].forEach(ev => {
             window.addEventListener(ev, () => { measure(); applyTransform(); });
         });
 
-        /* Best-effort close for "thanks." without leaving a blank page */
         function closePage() {
-            // Allowed when the tab was script-opened:
             try { window.top.close(); } catch (e) { }
             try { window.close(); } catch (e) { }
             try { window.open('', '_self'); window.close(); } catch (e) { }
 
-            // If blocked, prefer going back instead of leaving a blank tab
             setTimeout(() => {
                 if (!window.closed) {
                     if (history.length > 1) {
                         history.back();
-                    } else {
-                        // If there is no history, there's no standards-compliant way to force-close.
-                        // Do nothing (keeps current page) rather than leaving a blank tab.
                     }
                 }
             }, 60);
